@@ -65,9 +65,12 @@ export interface ModState { id: number; title: string | null; size: number; inst
 export interface JoinProgress {
   id: string;
   name: string;
-  phase: "mods" | "starting" | "started" | "failed" | "cancelled";
+  /** "waiting": for a free slot on a full server */
+  phase: "mods" | "waiting" | "starting" | "started" | "failed" | "cancelled";
   message: string | null;
   mods: { id: number; name: string; state: "ready" | "subscribing" | "waiting" | "downloading" | "skipped"; done: number; total: number }[];
+  /** while waiting: the server's players and slots, or null when it didn't answer */
+  slots: { players: number; max: number } | null;
 }
 
 export interface Friend {
@@ -133,7 +136,7 @@ export const api = {
   server: (id: string, hours = 24) => invoke<ServerDetail>("server", { id, hours }),
   modStates: (ids: number[]) => invoke<ModState[]>("mod_states", { ids }),
   ping: (servers: { id: string; ip: string; queryPort: number }[]) => invoke<Ping[]>("ping", { servers }),
-  join: (req: { id: string; password: string | null; closeRunning: boolean }) => invoke<void>("join", { req }),
+  join: (req: { id: string; password: string | null; closeRunning: boolean; waitForRoom: boolean }) => invoke<void>("join", { req }),
   cancelJoin: () => invoke<void>("cancel_join"),
   friends: () => invoke<Friends>("friends"),
   getSettings: () => invoke<Settings>("get_settings"),

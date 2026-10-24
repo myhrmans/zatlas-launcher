@@ -9,9 +9,12 @@ class Joining {
   progress = $state<JoinProgress | null>(null);
   /** DayZ starting after the join */
   launch = $state<Launch | null>(null);
+  /** when the join started waiting for a free slot */
+  waitingSince = $state<number | null>(null);
 
   constructor() {
     api.onJoin((p) => {
+      if (p.phase === "waiting" && this.progress?.phase !== "waiting") this.waitingSince = Date.now();
       this.progress = p;
       if (p.phase === "started") {
         live.joined(p.id, p.name);
@@ -25,7 +28,7 @@ class Joining {
   get starting() { return this.launch?.state === "running"; }
 
   /** Whether a join is running (the dialog may be closed meanwhile). */
-  get busy() { return !!this.progress && (this.progress.phase === "mods" || this.progress.phase === "starting"); }
+  get busy() { return !!this.progress && ["mods", "waiting", "starting"].includes(this.progress.phase); }
 
   open(id: string, name: string) {
     this.target = { id, name };
@@ -38,13 +41,14 @@ class Joining {
     if (this.launch && !this.starting) this.launch = null;
   }
 
-  async start(id: string, name: string, password: string, closeRunning: boolean) {
-    this.progress = { id, name, phase: "mods", message: null, mods: [] };
+  /** Starts a join; `waitForRoom`: when the server is full, wait for a free slot before starting DayZ. */
+  async start(id: string, name: string, password: string, closeRunning: boolean, waitForRoom = false) {
+    this.progress = { id, name, phase: "mods", message: null, mods: [], slots: null };
     this.launch = null;
     try {
-      await api.join({ id, password: password || null, closeRunning });
+      await api.join({ id, password: password || null, closeRunning, waitForRoom });
     } catch (e) {
-      this.progress = { id, name, phase: "failed", message: message(e), mods: [] };
+      this.progress = { id, name, phase: "failed", message: message(e), mods: [], slots: null };
     }
   }
 }

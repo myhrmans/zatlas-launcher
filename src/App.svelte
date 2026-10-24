@@ -26,7 +26,10 @@
       {/each}
     </nav>
     {#if joining.busy && !joining.target && joining.progress}
-      <button type="button" class="busy" onclick={() => joining.open(joining.progress!.id, joining.progress!.name)}>Joining {joining.progress.name}…</button>
+      {@const p = joining.progress}
+      <button type="button" class="busy" onclick={() => joining.open(p.id, p.name)}>
+        {p.phase === "waiting" ? `Waiting for a slot on ${p.name}${p.slots ? ` · ${p.slots.players}/${p.slots.max}` : ""}` : `Joining ${p.name}…`}
+      </button>
     {:else if joining.launch && !joining.target && (joining.starting || joining.launch.state === "failed")}
       {@const l = joining.launch}
       <button type="button" class="busy" class:bad={l.state === "failed"} onclick={() => joining.open(l.id, l.name)}>

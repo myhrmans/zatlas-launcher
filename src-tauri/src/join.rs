@@ -3,7 +3,8 @@
 //!
 //! `DayZ_BE.exe 0 1 1 -exe DayZ_x64.exe "-mod=<links>" -connect=<ip>:<game port>:<query port>`
 //!
-//! A join runs on its own thread and reports its progress to the window as `join` events.
+//! A join to a full server can wait for a free slot first. A join runs on its own thread and reports its progress to
+//! the window as `join` events.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -16,8 +17,9 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use steamworks::ItemState;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager, UserAttentionType};
 
+use crate::a2s::{self, Slots};
 use crate::api::{self, ModRef};
 use crate::dayz::{self, BE_EXE, GAME_EXE};
 use crate::mods;
@@ -28,6 +30,8 @@ use crate::steam::{Item, Request as SteamRequest, Steam};
 const TICK: Duration = Duration::from_millis(500);
 /// A download that Steam hasn't started after this long is asked for again.
 const ASK_AGAIN: Duration = Duration::from_secs(15);
+/// How often a full server is asked for its player count while a join waits for a free slot.
+const ROOM_CHECK: Duration = Duration::from_secs(5);
 /// The folder inside DayZ's folder that holds the links to the mods.
 pub const LINKS: &str = "!zatlas";
 
@@ -39,6 +43,9 @@ pub struct Request {
     pub password: Option<String>,
     /// close DayZ first if it's running
     pub close_running: bool,
+    /// when the server is full, wait for a free slot before starting DayZ
+    #[serde(default)]
+    pub wait_for_room: bool,
 }
 
 /// A join's progress, as the window gets it.
@@ -47,11 +54,13 @@ pub struct Request {
 pub struct Progress {
     pub id: String,
     pub name: String,
-    /// "mods", "starting", "started", "failed" or "cancelled"
+    /// "mods", "waiting" (for a free slot), "starting", "started", "failed" or "cancelled"
     pub phase: &'static str,
     /// why it failed
     pub message: Option<String>,
     pub mods: Vec<ModProgress>,
+    /// while waiting: the server's players and slots, or none when it didn't answer
+    pub slots: Option<Slots>,
 }
 
 #[derive(Serialize, Clone)]
@@ -116,6 +125,7 @@ impl Joins {
                 phase: "mods",
                 message: None,
                 mods: vec![],
+                slots: None,
             };
             match run(&app, &steam, &settings, &req, &joins.cancel, &mut p) {
                 Ok(()) => p.phase = "started",
@@ -177,6 +187,10 @@ fn run(
         let _hold = steam.hold();
         download(app, steam, &mods, cancel, p)?;
         links = link(steam, &dayz_dir, &mods)?;
+    }
+
+    if req.wait_for_room {
+        wait_for_room(app, &server.ip, query_port, cancel, p)?;
     }
 
     p.phase = "starting";
@@ -262,6 +276,36 @@ fn download(
             return Ok(());
         }
         thread::sleep(TICK);
+    }
+}
+
+/// Waits until the server has a free slot, asking it for its player count every few seconds, then flashes the app in
+/// the taskbar. A server that doesn't answer is asked again.
+fn wait_for_room(
+    app: &AppHandle,
+    ip: &str,
+    query_port: u16,
+    cancel: &AtomicBool,
+    p: &mut Progress,
+) -> Result<(), Stop> {
+    p.phase = "waiting";
+    loop {
+        p.slots = a2s::slots(ip, query_port);
+        emit(app, p);
+        if p.slots.is_some_and(|s| s.free()) {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.request_user_attention(Some(UserAttentionType::Informational));
+            }
+            return Ok(());
+        }
+        // short naps, so Cancel stops the wait at once
+        let asked = Instant::now();
+        while asked.elapsed() < ROOM_CHECK {
+            if cancel.load(Ordering::SeqCst) {
+                return Err(Stop::Cancelled);
+            }
+            thread::sleep(Duration::from_millis(200));
+        }
     }
 }
 

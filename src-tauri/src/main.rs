@@ -4,6 +4,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod a2s;
 mod api;
 mod dayz;
 mod friends;

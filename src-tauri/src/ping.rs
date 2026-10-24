@@ -8,11 +8,11 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 
-/// A server that hasn't answered by then gets no ping.
+use crate::a2s::QUERY;
+
+/// A server that hasn't answered by then gets no ping. Its first answer counts, whether that's its info or a
+/// challenge to ask again with: either is a round trip.
 const TIMEOUT: Duration = Duration::from_millis(1500);
-/// A2S_INFO: the header FF FF FF FF, then 'T' and "Source Engine Query". A server answers with its info, or with a
-/// challenge to ask again with; either answer is a round trip.
-const QUERY: &[u8] = b"\xFF\xFF\xFF\xFFTSource Engine Query\0";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
