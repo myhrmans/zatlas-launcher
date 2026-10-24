@@ -36,6 +36,10 @@ pnpm tauri build    # an installer in src-tauri/target/release/bundle/nsis/
 
 Checks: `cargo test`, `cargo clippy` and `cargo fmt` in `src-tauri/`, and `pnpm check` for the window's code.
 
+## Releasing
+
+Raise `version` in `src-tauri/Cargo.toml` (the app takes its version from there), push, then run the **Release** workflow from the Actions tab. It builds the Windows installer and publishes it as the release `v<version>`.
+
 ## The code
 
 The window is Svelte (`src/`); everything that touches Steam, DayZ or the network is Rust (`src-tauri/src/`).

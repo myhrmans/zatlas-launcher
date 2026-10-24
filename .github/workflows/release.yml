@@ -1,0 +1,68 @@
+# Builds the Windows installer and publishes it as a GitHub release.
+#
+# Run it from the Actions tab: Release → Run workflow. The version comes from src-tauri/Cargo.toml, and each version can
+# be released once, so raise it there first.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: Save it as a draft, to check before publishing
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read the version
+        id: version
+        shell: bash
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d '"' -f2)
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+            echo "::error::v$version is already released. Raise the version in src-tauri/Cargo.toml first."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Test
+        working-directory: src-tauri
+        run: cargo test
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tauriScript: pnpm tauri
+          tagName: v${{ steps.version.outputs.version }}
+          releaseName: Zatlas ${{ steps.version.outputs.version }}
+          releaseDraft: ${{ inputs.draft }}
+          releaseBody: |
+            The Windows installer is `Zatlas_${{ steps.version.outputs.version }}_x64-setup.exe` below. Zatlas needs Steam and DayZ installed.
+
+            The installer isn't code-signed yet, so Windows SmartScreen may warn about it: choose **More info**, then **Run anyway**.
