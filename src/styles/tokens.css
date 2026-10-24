@@ -1,0 +1,38 @@
+/* The design tokens: the only file with raw colours, fonts, sizes and shapes, the same as on zatlas.app. Dark only. */
+:root {
+  color-scheme: dark;
+
+  /* colour */
+  --bg: #12140f; --panel: #1c2017; --inset: #151810; --plate: #3b4332;
+  --ink: #f2eddb; --muted: #c0bca4; --plate-ink: #efe9d2;
+  --line: #3d4535; --rim: #5a6450; --edge: #060705;
+  --danger: #ff6b6b; --ok: #4cd964; --warn: #e0a020;
+  --amber: #f2b544; --amber-ink: #1c1e14; --dark: #16180f;
+  --dim: rgb(0 0 0 / .55);
+
+  /* fonts */
+  --f-stencil: "Saira Stencil One", Impact, sans-serif;
+  --f-text: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "Atkinson Hyperlegible Mono", ui-monospace, Consolas, monospace;
+
+  /* type sizes */
+  --t-wordmark: 19px; --t-plate: 16px; --t-section: 19px; --t-lead: 16px; --t-body: 14.5px; --t-body-small: 13.5px;
+  --t-label: 13px; --t-button: 14px; --t-button-small: 13px; --t-code: 13px;
+
+  /* spacing scale */
+  --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px; --s-5: 16px; --s-6: 24px;
+
+  /* radii */
+  --r-surface: 4px; --r-small: 3px;
+
+  /* depth: the edge, a hard drop, the lift and the soft halo */
+  --shadow: 0 0 0 1px var(--edge), 0 2px 0 rgb(0 0 0 / .5), 0 14px 28px rgb(0 0 0 / .5), 0 0 22px 3px rgb(0 0 0 / .38);
+  /* the height of the striped band on top of a dialog */
+  --hazard-h: 6px;
+
+  /* states: a disabled button is dimmed; a loading one has a moving stripe */
+  --disabled-opacity: .45; --skeleton-ms: 1.2s;
+
+  /* cut corners */
+  --cut-6: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
