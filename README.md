@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="brand/zatlas-wordmark-on-dark.svg">
-    <img src="brand/zatlas-wordmark-on-light.svg" alt="Zatlas" width="320">
-  </picture>
+  <img src="brand/zatlas-wordmark.svg" alt="Zatlas" width="320">
 </p>
 
 # Zatlas app
