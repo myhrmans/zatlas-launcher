@@ -42,5 +42,8 @@ export const DOUBT: Record<string, string> = {
 export const DOUBT_TITLE = "This count looks doubtful. Open the server for why.";
 export const FAKE_NOTE = "Likely a fake listing: its IP address lists hundreds of empty servers, or copies of one name.";
 
+/** How a ping reads: good up to 80 ms, fine up to 150 ms, slow above that */
+export const pingTone = (ms: number) => (ms <= 80 ? "good" : ms <= 150 ? "fine" : "slow");
+
 /** Whether a server runs the same game version as this PC (servers report "1.30.164200"). */
 export const sameVersion = (server: string, local: string | null) => !local || !server || server === local;

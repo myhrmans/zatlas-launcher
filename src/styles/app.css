@@ -21,5 +21,16 @@ select.field option { background: var(--panel); }
 .seg button:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
 /* a section heading in the stencil font on a dark band */
 .plate { margin: 0; padding: var(--s-2) var(--s-4); background: var(--plate); color: var(--plate-ink); font: 400 var(--t-plate)/1.3 var(--f-stencil); text-transform: uppercase; letter-spacing: .05em; }
+/* a server's ping: green when good, amber when slow. Pressing it measures it again: it dims, then the answer flashes */
+.ping { border: 0; background: none; padding: 0 var(--s-2); margin: 0 calc(-1 * var(--s-2)); border-radius: var(--r-small); color: inherit; font: inherit;
+  font-variant-numeric: tabular-nums; cursor: pointer; transition: opacity .15s; }
+.ping.busy { opacity: .35; cursor: progress; }
+.ping.flash { animation: ping-flash .9s ease-out; }
+@keyframes ping-flash { from { background: var(--amber); color: var(--amber-ink); } }
+.ping:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+.ping:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.ping.good { color: var(--ok); }
+.ping.slow { color: var(--warn); }
+.ping.none { color: var(--muted); }
 /* scrollbars that sit in the dark */
 * { scrollbar-color: var(--rim) transparent; scrollbar-width: thin; }

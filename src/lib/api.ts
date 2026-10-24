@@ -17,6 +17,8 @@ export interface ServerItem {
   name: string;
   ip: string;
   gamePort: number;
+  /** the Steam query port, for the ping */
+  queryPort: number;
   map: string;
   version: string;
   players: number;
@@ -38,7 +40,7 @@ export interface ServerItem {
 export interface ServerList { total: number; servers: ServerItem[] }
 
 export interface ServerDetail {
-  server: ServerItem & { queryPort: number | null };
+  server: ServerItem;
   mods: { id: number; name: string }[];
   history: { t: number; players: number }[];
 }
@@ -119,12 +121,16 @@ export const ITEM = { subscribed: 1, installed: 4, needsUpdate: 8, downloading: 
 
 export interface Settings { name: string; params: string }
 
+/** A server's ping in milliseconds, or null when it didn't answer */
+export interface Ping { id: string; ms: number | null }
+
 export const api = {
   status: () => invoke<Status>("status"),
   servers: (query: string) => invoke<ServerList>("servers", { query }),
   facets: () => invoke<Facets>("facets"),
   server: (id: string, hours = 24) => invoke<ServerDetail>("server", { id, hours }),
   modStates: (ids: number[]) => invoke<ModState[]>("mod_states", { ids }),
+  ping: (servers: { id: string; ip: string; queryPort: number }[]) => invoke<Ping[]>("ping", { servers }),
   join: (req: { id: string; password: string | null; closeRunning: boolean }) => invoke<void>("join", { req }),
   cancelJoin: () => invoke<void>("cancel_join"),
   friends: () => invoke<Friends>("friends"),

@@ -8,8 +8,9 @@
   import { api, message, type ModState, type ServerDetail, type ServerItem } from "../lib/api";
   import { favourites } from "../lib/favourites.svelte";
   import { chart, countAt } from "../lib/chart";
-  import { bytes, DOUBT, FAKE_NOTE, mapName, sameVersion } from "../lib/format";
+  import { bytes, DOUBT, FAKE_NOTE, mapName, pingTone, sameVersion } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
+  import { pings } from "../lib/ping.svelte";
   import { live } from "../lib/status.svelte";
   import Button from "./Button.svelte";
 
@@ -56,6 +57,8 @@
   }
 
   const s = $derived(detail?.server ?? summary);
+  const ping = $derived(pings.get(id));
+  $effect(() => { if (s) pings.measure([s]); });
   const fav = $derived(favourites.has(id));
   const local = $derived(live.now?.dayzVersion ?? null);
   const todo = $derived(detail && states ? detail.mods.filter((m) => { const st = states!.get(m.id); return st?.onWorkshop !== false && (!st?.installed || st.outdated); }) : []);
@@ -93,6 +96,17 @@
 
     <dl>
       <dt>Address</dt><dd><code>{address}</code> <button type="button" class="link" onclick={copy}>{copied ? "Copied" : "Copy"}</button></dd>
+      <dt>Ping</dt>
+      <dd>
+        {#if ping === undefined}<span class="note">Measuring…</span>
+        {:else}
+          {#key pings.refreshed(id)}
+            <button type="button" class="ping {ping === null ? 'none' : pingTone(ping)}" class:busy={pings.busy(id)} class:flash={pings.refreshed(id) > 0}
+              title="Press to ping again" onclick={() => pings.measure([s], true)}>{ping === null ? "No answer" : `${ping} ms`}</button>
+          {/key}
+          <span class="note">from this PC</span>
+        {/if}
+      </dd>
       <dt>Map</dt><dd>{mapName(s.map)}</dd>
       <dt>Version</dt>
       <dd>{s.version}{#if !sameVersion(s.version, local)}<span class="warn">{` · this PC has ${local}`}</span>{/if}</dd>

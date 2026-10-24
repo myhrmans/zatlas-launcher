@@ -49,6 +49,7 @@ The window is Svelte (`src/`); everything that touches Steam, DayZ or the networ
 | `steam.rs` | The Steam connection, in a helper process so Steam stops showing DayZ as running when it's done |
 | `mods.rs` | The Workshop mods on this PC, from Steam's files and the Workshop API |
 | `friends.rs` | Steam friends and the games and servers they're on |
+| `ping.rs` | Each server's ping from this PC |
 | `dayz.rs` | Finds DayZ and Steam, and whether they're running |
 | `api.rs` | zatlas.app's servers API and Steam's web APIs |
 | `vdf.rs` | Reads Steam's text files (.vdf, .acf) |

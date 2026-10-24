@@ -7,8 +7,9 @@
   import { onMount } from "svelte";
   import { api, message, type Facets, type ServerItem } from "../lib/api";
   import { favourites } from "../lib/favourites.svelte";
-  import { DOUBT_TITLE, FAKE_NOTE, mapName, sameVersion, since } from "../lib/format";
+  import { DOUBT_TITLE, FAKE_NOTE, mapName, pingTone, sameVersion, since } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
+  import { pings } from "../lib/ping.svelte";
   import { live } from "../lib/status.svelte";
   import Button from "./Button.svelte";
   import ServerPanel from "./ServerPanel.svelte";
@@ -83,6 +84,8 @@
   function onType() { clearTimeout(typingTimer); typingTimer = window.setTimeout(() => load(), 300); }
 
   onMount(() => { api.facets().then((f) => (facets = f)).catch(() => {}); });
+  // the servers in the list get their ping measured as they show up
+  $effect(() => { pings.measure(items); });
 
   const maps = $derived((facets?.maps ?? []).slice(0, 40));
   // favourites the list doesn't have (offline, or gone), when nothing else narrows the list
@@ -159,10 +162,11 @@
         <p class="count note">{favView ? `${items.length} of ${favourites.list.length} favourites online` : `${total.toLocaleString()} server${total === 1 ? "" : "s"}`}</p>
         <table>
           <thead>
-            <tr><th class="c-name">Server</th><th>Map</th><th class="c-num">Players</th><th><span class="sr-only">Join</span></th></tr>
+            <tr><th class="c-name">Server</th><th>Map</th><th class="c-num" title="Measured from this PC">Ping</th><th class="c-num">Players</th><th><span class="sr-only">Join</span></th></tr>
           </thead>
           <tbody>
             {#each items as s (s.id)}
+              {@const ms = pings.get(s.id)}
               <tr class:sel={s.id === selected} onclick={() => (selected = s.id)}>
                 <td class="c-name">
                   <div class="name-row">
@@ -178,6 +182,16 @@
                   </div>
                 </td>
                 <td>{mapName(s.map)}</td>
+                <td class="c-num">
+                  {#if ms === undefined}<span class="note">{s.queryPort ? "…" : "–"}</span>
+                  {:else}
+                    {#key pings.refreshed(s.id)}
+                      <button type="button" class="ping {ms === null ? 'none' : pingTone(ms)}" class:busy={pings.busy(s.id)} class:flash={pings.refreshed(s.id) > 0}
+                        title={ms === null ? "No answer. Press to try again" : "Press to ping again"}
+                        onclick={(e) => { e.stopPropagation(); pings.measure([s], true); }}>{ms === null ? "–" : `${ms} ms`}</button>
+                    {/key}
+                  {/if}
+                </td>
                 <td class="c-num">{#if s.doubt.length}<span class="doubt" role="img" aria-label="Count doubtful" title={DOUBT_TITLE}>?</span>{/if}<b>{s.players}</b><span class="note">/{s.maxPlayers}</span>
                   <span class="bar"><i style:width="{Math.min(100, (s.players / Math.max(1, s.maxPlayers)) * 100)}%"></i></span></td>
                 <td class="c-join"><Button primary small onclick={(e: MouseEvent) => { e.stopPropagation(); joining.open(s.id, s.name); }}>Join</Button></td>

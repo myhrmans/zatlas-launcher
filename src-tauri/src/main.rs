@@ -10,6 +10,7 @@ mod friends;
 mod join;
 mod launch;
 mod mods;
+mod ping;
 mod settings;
 mod steam;
 mod vdf;
@@ -97,6 +98,12 @@ async fn server(id: String, hours: Option<u32>) -> Result<Value, String> {
 #[tauri::command]
 async fn mod_states(ids: Vec<u64>) -> Result<Vec<mods::ModState>, String> {
     blocking(move || Ok(mods::states(&ids))).await
+}
+
+/// Each server's ping from this PC.
+#[tauri::command]
+async fn ping(servers: Vec<ping::Target>) -> Result<Vec<ping::Ping>, String> {
+    blocking(move || ping::ping(&servers)).await
 }
 
 #[tauri::command]
@@ -224,6 +231,7 @@ fn main() {
             facets,
             server,
             mod_states,
+            ping,
             join,
             cancel_join,
             open_logs,
