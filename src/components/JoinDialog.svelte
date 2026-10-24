@@ -66,9 +66,11 @@
           {#if running}<li class="warn">DayZ is running: Zatlas closes it before joining.</li>{/if}
           {#if !s.queryPort}<li class="danger">zatlas.app doesn't know this server's query port yet, so it can't be joined from here.</li>{/if}
         </ul>
-        <label class="pw"><span>Password <span class="note">(only if the server has one)</span></span>
-          <input class="field" type="password" bind:value={password} autocomplete="off" />
-        </label>
+        {#if s.password !== false}
+          <label class="pw"><span>Password <span class="note">{s.password ? "(this server needs one)" : "(only if the server has one)"}</span></span>
+            <input class="field" type="password" bind:value={password} autocomplete="off" />
+          </label>
+        {/if}
         {#if detail.mods.length}
           <p class="note">While mods download, Zatlas is connected to Steam as DayZ, so Steam shows you as playing DayZ.</p>
         {/if}

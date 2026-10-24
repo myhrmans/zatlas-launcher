@@ -34,6 +34,8 @@ export interface ServerItem {
   doubt: string[];
   /** likely a fake listing */
   farm: boolean;
+  /** a password is needed to join; null when the server hasn't said */
+  password: boolean | null;
   modCount: number | null;
 }
 

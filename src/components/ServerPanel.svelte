@@ -113,6 +113,7 @@
       <dt>View</dt><dd>{s.firstPerson ? "First person only" : "First and third person"}</dd>
       {#if s.gameTime}<dt>Time</dt><dd>{s.gameTime}{s.dayAccel ? ` · days ×${s.dayAccel}, nights ×${s.nightAccel}` : ""}</dd>{/if}
       <dt>BattlEye</dt><dd>{s.battleye ? "On" : "Off"}</dd>
+      {#if s.password != null}<dt>Password</dt><dd>{s.password ? "Needed to join" : "None"}</dd>{/if}
     </dl>
 
     <h3 class="plate">Players over time (claimed)</h3>
