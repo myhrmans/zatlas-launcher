@@ -10,7 +10,7 @@ A small Windows app for DayZ players, to go with [zatlas.app](https://zatlas.app
 - **Join:** subscribes to the server's missing mods through Steam, waits for the downloads, and starts DayZ straight into the server with the mods loaded. While DayZ starts, it shows each step, and why when it fails.
 - **Mods:** the Workshop mods on your PC, their size, updates and when you last used them. Update or unsubscribe from here.
 - **Friends:** your Steam friends who are online, which game they're in, and for DayZ, which server when Steam knows it, with Join.
-- **Invites:** "Copy invite link" on a server gives a zatlas.app link for Discord or a friend. It opens the server in Zatlas (`zatlas://join/<ip:port>`), or offers the app.
+- **Invites:** "Copy invite link" on a server, in its panel or its right-click menu, gives a zatlas.app link for Discord or a friend. It opens the server in Zatlas (`zatlas://join/<ip:port>`), or offers the app.
 
 ## How joining works
 

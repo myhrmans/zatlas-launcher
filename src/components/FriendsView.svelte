@@ -1,13 +1,15 @@
 <script lang="ts">
   /**
    * Steam friends who are online: in DayZ first, with the server when Steam knows it (named from zatlas.app's list, with
-   * Join), then those in other games, then the rest. Refreshed while the tab is open; that keeps the app connected to
+   * Join and the server's right-click menu), then those in other games, then the rest. Refreshed while the tab is open; that keeps the app connected to
    * Steam as DayZ, which the note says.
    */
   import { onDestroy, onMount } from "svelte";
   import { api, message, type Friends, type ServerItem } from "../lib/api";
   import { mapName } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
+  import { menu } from "../lib/menu.svelte";
+  import { serverMenu } from "../lib/serverMenu";
   import Button from "./Button.svelte";
 
   const EVERY = 20_000;
@@ -57,7 +59,7 @@
       <ul>
         {#each dayz as f (f.id)}
           {@const s = f.server ? servers.get(f.server) : undefined}
-          <li>
+          <li oncontextmenu={f.server ? (e) => menu.show(e, serverMenu(s ?? { id: f.server!, name: f.server! }), { title: s?.name ?? f.server! }) : undefined}>
             {#if f.avatar}<img class="av dayz" src={f.avatar} alt="" />{:else}<span class="av dayz">{initial(f.name)}</span>{/if}
             <span class="who"><b>{f.name}</b>
               <span class="note">

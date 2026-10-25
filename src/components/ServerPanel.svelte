@@ -13,6 +13,7 @@
   import { joining } from "../lib/joining.svelte";
   import { linkify } from "../lib/links";
   import { pings } from "../lib/ping.svelte";
+  import { inviteLink } from "../lib/serverMenu";
   import { live } from "../lib/status.svelte";
   import Button from "./Button.svelte";
 
@@ -68,9 +69,8 @@
   const todoSize = $derived(todo.reduce((n, m) => n + (states?.get(m.id)?.size ?? 0), 0));
   const address = $derived(s ? `${s.ip}:${s.gamePort}` : id);
 
-  /** Copies the invite link: a page on zatlas.app that opens the server in the app, or offers the app. */
   async function copyInvite() {
-    try { await navigator.clipboard.writeText(`https://zatlas.app/join?s=${encodeURIComponent(id)}`); invited = true; setTimeout(() => (invited = false), 2000); } catch { /* no clipboard */ }
+    try { await navigator.clipboard.writeText(inviteLink(id)); invited = true; setTimeout(() => (invited = false), 2000); } catch { /* no clipboard */ }
   }
 
   async function copy() {

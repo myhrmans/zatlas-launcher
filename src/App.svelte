@@ -1,8 +1,9 @@
 <script lang="ts">
   /**
-   * The window: the brand and tabs on top with Steam's and DayZ's status, the tab's view, and the join dialog. An invite
-   * link (zatlas://join/<ip:port>) opens the join dialog for its server.
+   * The window: the brand and tabs on top with Steam's and DayZ's status, the tab's view, the join dialog and the
+   * right-click menu. An invite link (zatlas://join/<ip:port>) opens the join dialog for its server.
    */
+  import ContextMenu from "./components/ContextMenu.svelte";
   import FriendsView from "./components/FriendsView.svelte";
   import JoinDialog from "./components/JoinDialog.svelte";
   import ModsView from "./components/ModsView.svelte";
@@ -26,7 +27,16 @@
   }
   api.takeInvite().then((id) => id && invited(id)).catch(() => {});
   api.onInvite(invited);
+
+  // The browser's own menu (Back, Refresh, Print…) doesn't belong in an app. Text fields and selected text keep it, for
+  // copy and paste; servers have their own (ContextMenu).
+  function oncontextmenu(e: MouseEvent) {
+    const field = e.target instanceof Element && e.target.closest("input, textarea");
+    if (!e.defaultPrevented && !field && !getSelection()?.toString()) e.preventDefault();
+  }
 </script>
+
+<svelte:window {oncontextmenu} />
 
 <div class="shell">
   <header class="top">
@@ -54,6 +64,7 @@
   </main>
 </div>
 {#if joining.target}<JoinDialog />{/if}
+<ContextMenu />
 
 <style>
   .shell { height: 100%; display: grid; grid-template-rows: auto 1fr; }

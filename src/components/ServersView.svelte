@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    * The server list from zatlas.app (the same as zatlas.app/servers): search and filters, favourites, a Join button on
-   * the row under the pointer, and the chosen server's panel on the right. While DayZ runs, a line on top names the
+   * the row under the pointer, a right-click menu (Join, invite link, …), and the chosen server's panel on the right. While DayZ runs, a line on top names the
    * server last joined from here. The ping filter works on this PC's pings, so it hides servers among those loaded; the
    * other filters go to the servers API.
    */
@@ -10,7 +10,9 @@
   import { favourites } from "../lib/favourites.svelte";
   import { DOUBT_TITLE, FAKE_NOTE, mapName, pingTone, sameVersion, since } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
+  import { menu } from "../lib/menu.svelte";
   import { pings } from "../lib/ping.svelte";
+  import { serverMenu } from "../lib/serverMenu";
   import { live } from "../lib/status.svelte";
   import Button from "./Button.svelte";
   import ServerPanel from "./ServerPanel.svelte";
@@ -124,7 +126,7 @@
   <section class="list">
     {#if playing}
       <p class="playing">
-        <span>In DayZ on <button type="button" onclick={() => (selected = playing.id)}>{playing.name}</button></span>
+        <span>In DayZ on <button type="button" onclick={() => (selected = playing.id)} oncontextmenu={(e) => menu.show(e, serverMenu(playing), { title: playing.name })}>{playing.name}</button></span>
         {#if live.now?.dayzStarted}<span class="note">since {since(live.now.dayzStarted)}</span>{/if}
       </p>
     {/if}
@@ -204,7 +206,8 @@
           <tbody>
             {#each shown as s (s.id)}
               {@const ms = pings.get(s.id)}
-              <tr class:sel={s.id === selected} onclick={() => (selected = s.id)}>
+              <tr class:sel={s.id === selected} class:menu={menu.isFor(s.id)} onclick={() => (selected = s.id)}
+                oncontextmenu={(e) => menu.show(e, serverMenu(s), { title: s.name, key: s.id })}>
                 <td class="c-name">
                   <div class="name-row">
                     <Star id={s.id} name={s.name} />
@@ -246,7 +249,7 @@
         {#if missingFavs.length}
           <h2 class="plate">Offline favourites</h2>
           <ul class="offline">
-            {#each missingFavs as f (f.id)}<li><Star id={f.id} name={f.name} /><span>{f.name}</span><code class="note">{f.id}</code></li>{/each}
+            {#each missingFavs as f (f.id)}<li oncontextmenu={(e) => menu.show(e, serverMenu(f), { title: f.name })}><Star id={f.id} name={f.name} /><span>{f.name}</span><code class="note">{f.id}</code></li>{/each}
           </ul>
         {/if}
       {/if}
@@ -282,7 +285,7 @@
   th { text-align: left; font-size: var(--t-label); color: var(--muted); font-weight: 700; padding: var(--s-3); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 1; }
   td { padding: var(--s-3); border-bottom: 1px solid var(--line); vertical-align: middle; }
   tbody tr { cursor: pointer; }
-  tbody tr:hover, tbody tr.sel { background: var(--inset); }
+  tbody tr:hover, tbody tr.sel, tbody tr.menu { background: var(--inset); }
   tbody tr.sel { box-shadow: inset 3px 0 0 var(--amber); }
   .c-name { width: 100%; }
   .name-row { display: flex; align-items: center; gap: var(--s-3); }
