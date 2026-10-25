@@ -1,6 +1,7 @@
 <script lang="ts">
   /**
-   * One server: the facts, Join, the favourite star, a link to it on zatlas.app, its player count over the last day or
+   * One server: the facts, Join, the favourite star, a link to it on zatlas.app, what its owner wrote about it (with
+   * links that open in the browser), its player count over the last day or
    * week (from zatlas.app's servers API, as on the site's server panel), and its mods with what this PC has:
    * downloaded, out of date, or still to download (and how big). The row's data shows at once while the rest loads.
    */
@@ -10,6 +11,7 @@
   import { chart, countAt } from "../lib/chart";
   import { bytes, DOUBT, FAKE_NOTE, mapName, pingTone, sameVersion } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
+  import { linkify } from "../lib/links";
   import { pings } from "../lib/ping.svelte";
   import { live } from "../lib/status.svelte";
   import Button from "./Button.svelte";
@@ -116,6 +118,11 @@
       {#if s.password != null}<dt>Password</dt><dd>{s.password ? "Needed to join" : "None"}</dd>{/if}
     </dl>
 
+    {#if detail?.server.description}
+      <h3 class="plate">About</h3>
+      <p class="about">{#each linkify(detail.server.description) as part, i (i)}{#if part.url}<button type="button" class="link" title={part.url} onclick={() => api.openLink(part.url!)}>{part.text}</button>{:else}{part.text}{/if}{/each}</p>
+    {/if}
+
     <h3 class="plate">Players over time (claimed)</h3>
     <div class="range" role="group" aria-label="Players over time">
       <button type="button" aria-pressed={hours === 24} onclick={() => (hours = 24)}>24 hours</button>
@@ -194,6 +201,8 @@
   .link { border: 0; background: none; padding: 0; color: var(--amber); cursor: pointer; text-align: left; font-size: inherit; }
   .link:hover { text-decoration: underline; }
   h3.plate { font-size: var(--t-label); margin-top: var(--s-3); }
+  .about { margin: 0; white-space: pre-line; overflow-wrap: anywhere; font-size: var(--t-body-small); }
+  .about .link { display: inline; }
   .range { display: flex; gap: var(--s-2); align-items: center; }
   .range button { border: 0; background: var(--inset); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); padding: var(--s-2) var(--s-4); cursor: pointer; font: 700 var(--t-button-small)/1.4 var(--f-text); }
   .range button[aria-pressed="true"] { background: var(--amber); color: var(--amber-ink); box-shadow: none; }

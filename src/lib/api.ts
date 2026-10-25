@@ -42,7 +42,8 @@ export interface ServerItem {
 export interface ServerList { total: number; servers: ServerItem[] }
 
 export interface ServerDetail {
-  server: ServerItem;
+  /** `description`: what the server's owner wrote about it; null until zatlas.app has read it */
+  server: ServerItem & { description: string | null };
   mods: { id: number; name: string }[];
   history: { t: number; players: number }[];
 }
@@ -144,6 +145,8 @@ export const api = {
   onJoin: (f: (p: JoinProgress) => void): Promise<UnlistenFn> => listen<JoinProgress>("join", (e) => f(e.payload)),
   onLaunch: (f: (l: Launch) => void): Promise<UnlistenFn> => listen<Launch>("launch", (e) => f(e.payload)),
   openLogs: () => invoke<void>("open_logs"),
+  /** opens a web link in the browser */
+  openLink: (url: string) => invoke<void>("open_link", { url }),
   workshopMods: () => invoke<WorkshopMod[]>("workshop_mods"),
   modProgress: (ids: number[]) => invoke<ItemProgress[]>("mod_progress", { ids }),
   updateMods: (ids: number[]) => invoke<void>("update_mods", { ids }),

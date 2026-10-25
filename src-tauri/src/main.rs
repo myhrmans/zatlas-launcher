@@ -22,6 +22,7 @@ use std::sync::{Arc, Mutex};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_opener::OpenerExt;
 
 use settings::Settings;
 use steam::Steam;
@@ -171,6 +172,20 @@ async fn unsubscribe_mods(core: Shared<'_>, ids: Vec<u64>) -> Result<(), String>
     .await
 }
 
+/// Opens a link from a server's description in the browser. Only web links: an address without http(s):// gets https://.
+#[tauri::command]
+fn open_link(app: AppHandle, url: String) -> Result<(), String> {
+    if url.is_empty() || url.contains(char::is_whitespace) {
+        return Err("That isn't a link.".into());
+    }
+    let url = if url.starts_with("http://") || url.starts_with("https://") {
+        url
+    } else {
+        format!("https://{url}")
+    };
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
 /// Opens DayZ's log folder (%LOCALAPPDATA%\DayZ) in Explorer.
 #[tauri::command]
 fn open_logs() -> Result<(), String> {
@@ -236,6 +251,7 @@ fn main() {
             join,
             cancel_join,
             open_logs,
+            open_link,
             close_game,
             friends,
             workshop_mods,
