@@ -1,5 +1,8 @@
 <script lang="ts">
-  /** The window: the brand and tabs on top with Steam's and DayZ's status, the tab's view, and the join dialog. */
+  /**
+   * The window: the brand and tabs on top with Steam's and DayZ's status, the tab's view, and the join dialog. An invite
+   * link (zatlas://join/<ip:port>) opens the join dialog for its server.
+   */
   import FriendsView from "./components/FriendsView.svelte";
   import JoinDialog from "./components/JoinDialog.svelte";
   import ModsView from "./components/ModsView.svelte";
@@ -7,6 +10,7 @@
   import SettingsView from "./components/SettingsView.svelte";
   import StatusChips from "./components/StatusChips.svelte";
   import Wordmark from "./components/Wordmark.svelte";
+  import { api } from "./lib/api";
   import { joining } from "./lib/joining.svelte";
   import { live } from "./lib/status.svelte";
 
@@ -15,6 +19,13 @@
   const TABS: [Tab, string][] = [["servers", "Servers"], ["mods", "Mods"], ["friends", "Friends"], ["settings", "Settings"]];
 
   live.start();
+
+  function invited(id: string) {
+    tab = "servers";
+    joining.open(id, id);
+  }
+  api.takeInvite().then((id) => id && invited(id)).catch(() => {});
+  api.onInvite(invited);
 </script>
 
 <div class="shell">

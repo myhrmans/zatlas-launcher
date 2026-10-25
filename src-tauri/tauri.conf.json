@@ -37,5 +37,14 @@
     "resources": {
       "steam_api64.dll": "steam_api64.dll"
     }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "zatlas"
+        ]
+      }
+    }
   }
 }

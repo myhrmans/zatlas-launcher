@@ -144,6 +144,10 @@ export const api = {
   setSettings: (settings: Settings) => invoke<void>("set_settings", { settings }),
   onJoin: (f: (p: JoinProgress) => void): Promise<UnlistenFn> => listen<JoinProgress>("join", (e) => f(e.payload)),
   onLaunch: (f: (l: Launch) => void): Promise<UnlistenFn> => listen<Launch>("launch", (e) => f(e.payload)),
+  /** the invite link (a server id) that started the app, once */
+  takeInvite: () => invoke<string | null>("take_invite"),
+  /** invite links opened while the app runs */
+  onInvite: (f: (id: string) => void): Promise<UnlistenFn> => listen<string>("invite", (e) => f(e.payload)),
   openLogs: () => invoke<void>("open_logs"),
   /** opens a web link in the browser */
   openLink: (url: string) => invoke<void>("open_link", { url }),

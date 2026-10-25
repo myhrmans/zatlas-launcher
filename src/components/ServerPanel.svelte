@@ -22,6 +22,7 @@
   let states = $state.raw<Map<number, ModState> | null>(null);
   let error = $state("");
   let copied = $state(false);
+  let invited = $state(false);
   let hours = $state(24);
   /** the pointer's place on the chart, 0 to 1 */
   let hover = $state<number | null>(null);
@@ -67,6 +68,11 @@
   const todoSize = $derived(todo.reduce((n, m) => n + (states?.get(m.id)?.size ?? 0), 0));
   const address = $derived(s ? `${s.ip}:${s.gamePort}` : id);
 
+  /** Copies the invite link: a page on zatlas.app that opens the server in the app, or offers the app. */
+  async function copyInvite() {
+    try { await navigator.clipboard.writeText(`https://zatlas.app/join?s=${encodeURIComponent(id)}`); invited = true; setTimeout(() => (invited = false), 2000); } catch { /* no clipboard */ }
+  }
+
   async function copy() {
     try { await navigator.clipboard.writeText(address); copied = true; setTimeout(() => (copied = false), 1500); } catch { /* no clipboard */ }
   }
@@ -93,6 +99,7 @@
     <div class="buttons">
       <Button primary onclick={() => joining.open(id, s.name)}>Join</Button>
       <Button aria-pressed={fav} onclick={() => favourites.toggle({ id, name: s.name })}>{fav ? "★ Favourite" : "☆ Favourite"}</Button>
+      <Button onclick={copyInvite} title="A link for Discord or a friend: it opens this server in Zatlas">{invited ? "Invite link copied" : "Copy invite link"}</Button>
       <Button onclick={() => openUrl(`https://zatlas.app/servers?s=${encodeURIComponent(id)}`)}>On zatlas.app ↗</Button>
     </div>
 

@@ -1,6 +1,6 @@
 //! Zatlas: a Windows app that joins DayZ servers with their mods installed, and shows which servers your Steam friends
 //! are on. The window (src/) calls the commands in this file; a join reports its progress back through `join` and
-//! `launch` events.
+//! `launch` events, and an invite link through `invite` events.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -8,6 +8,7 @@ mod a2s;
 mod api;
 mod dayz;
 mod friends;
+mod invite;
 mod join;
 mod launch;
 mod mods;
@@ -210,6 +211,12 @@ async fn friends(core: Shared<'_>) -> Result<Value, String> {
     blocking(move || core.steam.call(&steam::Request::Friends)).await
 }
 
+/// The invite link that started the app, once.
+#[tauri::command]
+fn take_invite(pending: State<'_, invite::Pending>) -> Option<String> {
+    pending.0.lock().unwrap().take()
+}
+
 #[tauri::command]
 fn get_settings(core: Shared<'_>) -> Settings {
     core.settings.lock().unwrap().clone()
@@ -229,7 +236,11 @@ fn main() {
         return;
     }
     tauri::Builder::default()
+        // a second start, from an invite link, hands the link to this copy (to the deep-link plugin) and ends
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| invite::show(app)))
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
+        .manage(invite::Pending::default())
         .setup(|app| {
             let settings_path = settings::path(&app.path().app_config_dir()?);
             app.manage(Arc::new(Core {
@@ -239,6 +250,7 @@ fn main() {
                 settings: Mutex::new(settings::load(&settings_path)),
                 settings_path,
             }));
+            invite::setup(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -259,6 +271,7 @@ fn main() {
             update_mods,
             subscribe_mods,
             unsubscribe_mods,
+            take_invite,
             get_settings,
             set_settings
         ])

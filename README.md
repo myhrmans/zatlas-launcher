@@ -10,6 +10,7 @@ A small Windows app for DayZ players, to go with [zatlas.app](https://zatlas.app
 - **Join:** subscribes to the server's missing mods through Steam, waits for the downloads, and starts DayZ straight into the server with the mods loaded. While DayZ starts, it shows each step, and why when it fails.
 - **Mods:** the Workshop mods on your PC, their size, updates and when you last used them. Update or unsubscribe from here.
 - **Friends:** your Steam friends who are online, which game they're in, and for DayZ, which server when Steam knows it, with Join.
+- **Invites:** "Copy invite link" on a server gives a zatlas.app link for Discord or a friend. It opens the server in Zatlas (`zatlas://join/<ip:port>`), or offers the app.
 
 ## How joining works
 
@@ -50,6 +51,8 @@ The window is Svelte (`src/`); everything that touches Steam, DayZ or the networ
 | `mods.rs` | The Workshop mods on this PC, from Steam's files and the Workshop API |
 | `friends.rs` | Steam friends and the games and servers they're on |
 | `ping.rs` | Each server's ping from this PC |
+| `a2s.rs` | Asks a server how full it is, for waiting for a free slot |
+| `invite.rs` | Invite links: `zatlas://join/<ip:port>` |
 | `dayz.rs` | Finds DayZ and Steam, and whether they're running |
 | `api.rs` | zatlas.app's servers API and Steam's web APIs |
 | `vdf.rs` | Reads Steam's text files (.vdf, .acf) |
