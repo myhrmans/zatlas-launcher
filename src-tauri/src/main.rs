@@ -74,7 +74,7 @@ async fn status(core: Shared<'_>) -> Result<StatusOut, String> {
 async fn servers(query: String) -> Result<Value, String> {
     if !query
         .chars()
-        .all(|c| c.is_ascii_alphanumeric() || "=&%._,:+-".contains(c))
+        .all(|c| c.is_ascii_alphanumeric() || "=&%._,:+-*".contains(c))
     {
         return Err("bad query".into());
     }
@@ -179,7 +179,8 @@ fn open_link(app: AppHandle, url: String) -> Result<(), String> {
     if url.is_empty() || url.contains(char::is_whitespace) {
         return Err("That isn't a link.".into());
     }
-    let url = if url.starts_with("http://") || url.starts_with("https://") {
+    let lower = url.to_ascii_lowercase();
+    let url = if lower.starts_with("http://") || lower.starts_with("https://") {
         url
     } else {
         format!("https://{url}")

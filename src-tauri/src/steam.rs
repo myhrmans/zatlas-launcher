@@ -12,7 +12,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, TryLockError};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -144,7 +144,13 @@ impl Steam {
             .and_then(|_| h.stdout.read_line(&mut answer));
         h.used = Instant::now();
         let answer: Value = match sent {
-            Ok(n) if n > 0 => serde_json::from_str(&answer).map_err(|e| e.to_string())?,
+            Ok(n) if n > 0 => match serde_json::from_str(&answer) {
+                Ok(answer) => answer,
+                Err(e) => {
+                    *slot = None;
+                    return Err(format!("The Steam helper answered something unexpected: {e}"));
+                }
+            },
             _ => {
                 *slot = None;
                 return Err("The Steam helper stopped. Is Steam running?".into());
@@ -165,13 +171,15 @@ impl Steam {
         Hold(self.clone())
     }
 
-    /// Whether the helper is running, so the app is connected to Steam as DayZ.
+    /// Whether the helper is running, so the app is connected to Steam as DayZ. While a request is under way it is.
     pub fn connected(&self) -> bool {
-        self.helper
-            .lock()
-            .unwrap()
-            .as_mut()
-            .is_some_and(|h| h.child.try_wait().ok().flatten().is_none())
+        match self.helper.try_lock() {
+            Ok(mut helper) => helper
+                .as_mut()
+                .is_some_and(|h| h.child.try_wait().ok().flatten().is_none()),
+            Err(TryLockError::WouldBlock) => true,
+            Err(TryLockError::Poisoned(_)) => false,
+        }
     }
 }
 

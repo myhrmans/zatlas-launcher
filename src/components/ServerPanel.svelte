@@ -31,13 +31,14 @@
 
   $effect(() => {
     let current = true;
+    error = "";
     api.server(id, hours)
       .then((d) => {
         if (!current) return;
         detail = d;
         if (d.mods.length && !states) api.modStates(d.mods.map((m) => m.id)).then((m) => (states = new Map(m.map((x) => [x.id, x])))).catch(() => {});
       })
-      .catch((e) => (error = message(e)));
+      .catch((e) => { if (current) error = message(e); });
     return () => { current = false; };
   });
 

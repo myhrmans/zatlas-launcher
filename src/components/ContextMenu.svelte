@@ -11,6 +11,8 @@
   /** the item that ran and now says so, just before the menu closes */
   let done = $state.raw<MenuAction | null>(null);
   let timer = 0;
+  /** what had the focus before the menu opened */
+  let before: HTMLElement | null = null;
 
   // at the pointer, or left of it or above it where it would leave the window
   $effect(() => {
@@ -18,6 +20,7 @@
     clearTimeout(timer);
     done = null;
     if (!open || !box) return;
+    before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const r = box.getBoundingClientRect();
     x = open.x + r.width > innerWidth - 4 ? Math.max(4, open.x - r.width) : open.x;
     y = open.y + r.height > innerHeight - 4 ? Math.max(4, open.y - r.height) : open.y;
@@ -32,24 +35,30 @@
     return () => removeEventListener("scroll", close, true);
   });
 
+  /** Closes the menu and gives the focus back. */
+  function close() {
+    menu.close();
+    before?.focus();
+  }
+
   async function run(item: MenuAction) {
-    if (!item.done) menu.close();
+    if (!item.done) close();
     try {
       await item.run();
     } catch {
-      menu.close();
+      close();
       return;
     }
     if (item.done) {
       done = item;
-      timer = window.setTimeout(() => menu.close(), 800);
+      timer = window.setTimeout(close, 800);
     }
   }
 
   function onkeydown(e: KeyboardEvent) {
     if (e.key === "Escape" || e.key === "Tab") {
       e.preventDefault();
-      menu.close();
+      close();
     } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       const items = [...box!.querySelectorAll<HTMLElement>("[role=menuitem]")];

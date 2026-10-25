@@ -14,6 +14,7 @@
 use std::fs::{self, File};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -190,12 +191,17 @@ fn hung(pid: u32) -> bool {
     search.hung
 }
 
+/// The number of the newest launch. A launch's watcher stops when a newer one starts, so it can't take the new game
+/// for its own.
+static NEWEST: AtomicU64 = AtomicU64::new(0);
+
 /// Follows a launch for server `id` that was just started, on its own thread.
 pub fn watch(app: AppHandle, id: String, name: String) {
-    thread::spawn(move || follow(&app, id, name));
+    let number = NEWEST.fetch_add(1, Ordering::SeqCst) + 1;
+    thread::spawn(move || follow(&app, id, name, number));
 }
 
-fn follow(app: &AppHandle, id: String, name: String) {
+fn follow(app: &AppHandle, id: String, name: String, number: u64) {
     let start = Instant::now();
     // a little earlier than now, so logs made as the game starts count
     let since = SystemTime::now() - Duration::from_secs(3);
@@ -224,6 +230,9 @@ fn follow(app: &AppHandle, id: String, name: String) {
 
     loop {
         thread::sleep(TICK);
+        if NEWEST.load(Ordering::SeqCst) != number {
+            break;
+        }
         let secs = start.elapsed().as_secs();
         report.elapsed = secs;
         system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
@@ -291,6 +300,8 @@ fn follow(app: &AppHandle, id: String, name: String) {
         // how it ended, if it has
         if marks.mission {
             report.state = "ingame";
+            report.problem = None;
+            report.detail = None;
         } else if marks.intro && menu_at.is_none() {
             menu_at = Some(secs);
             report.state = "failed";

@@ -8,6 +8,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::panic::{self, AssertUnwindSafe};
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
@@ -127,7 +128,15 @@ impl Joins {
                 mods: vec![],
                 slots: None,
             };
-            match run(&app, &steam, &settings, &req, &joins.cancel, &mut p) {
+            let result = panic::catch_unwind(AssertUnwindSafe(|| {
+                run(&app, &steam, &settings, &req, &joins.cancel, &mut p)
+            }))
+            .unwrap_or_else(|_| {
+                Err(Stop::Failed(
+                    "Something went wrong in Zatlas during the join. Try again.".into(),
+                ))
+            });
+            match result {
                 Ok(()) => p.phase = "started",
                 Err(Stop::Cancelled) => p.phase = "cancelled",
                 Err(Stop::Failed(e)) => {
@@ -345,7 +354,7 @@ pub fn link_name(name: &str, id: u64) -> String {
     if clean.is_empty() {
         id.to_string()
     } else {
-        clean.chars().take(60).collect()
+        clean.chars().take(60).collect::<String>().trim_end().to_string()
     }
 }
 
@@ -411,5 +420,6 @@ mod tests {
         assert_eq!(link_name("DayZ-Expansion-Core", 1), "DayZ-Expansion-Core");
         assert_eq!(link_name("SkyZ - Skybox Overhaul!", 1), "SkyZ - Skybox Overhaul");
         assert_eq!(link_name("★★", 42), "42");
+        assert_eq!(link_name(&format!("{} b", "a".repeat(59)), 1), "a".repeat(59));
     }
 }

@@ -5,7 +5,7 @@
    * server last joined from here. The ping filter works on this PC's pings, so it hides servers among those loaded; the
    * other filters go to the servers API.
    */
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { api, message, type Facets, type ServerItem } from "../lib/api";
   import { favourites } from "../lib/favourites.svelte";
   import { DOUBT_TITLE, FAKE_NOTE, mapName, pingTone, sameVersion, since } from "../lib/format";
@@ -96,9 +96,9 @@
     }
   }
 
-  // filters reload at once; typing waits for a pause
+  // filters reload at once (and the favourites view when a star changes); typing waits for a pause
   let typingTimer = 0;
-  $effect(() => { void [map, person, modded, minPlayers, favView, showFake, noPassword]; load(); });
+  $effect(() => { void [map, person, modded, minPlayers, favView, showFake, noPassword, favView && favourites.list]; untrack(() => load()); });
   function onType() { clearTimeout(typingTimer); typingTimer = window.setTimeout(() => load(), 300); }
 
   onMount(() => { api.facets().then((f) => (facets = f)).catch(() => {}); });

@@ -308,8 +308,15 @@ fn mod_id(folder: &Path, names: &HashMap<String, u64>) -> Option<u64> {
 /// Removes the `!zatlas` links to these mods (after unsubscribing they'd point at nothing).
 pub fn unlink(ids: &[u64]) {
     let Some(dayz) = dayz::dayz_dir() else { return };
-    for (id, link) in links(&dayz) {
-        if ids.contains(&id) && junction::exists(&link).unwrap_or(false) {
+    let Ok(dir) = fs::read_dir(dayz.join(join::LINKS)) else {
+        return;
+    };
+    // every link to these mods: a mod can have more than one, as its name differs between servers
+    for link in dir.flatten().map(|e| e.path()) {
+        let id = junction::get_target(&link)
+            .ok()
+            .and_then(|target| target.file_name()?.to_str()?.parse::<u64>().ok());
+        if id.is_some_and(|id| ids.contains(&id)) {
             let _ = fs::remove_dir(&link);
         }
     }

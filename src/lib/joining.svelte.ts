@@ -32,7 +32,12 @@ class Joining {
 
   open(id: string, name: string) {
     this.target = { id, name };
-    if (!this.busy && !this.starting && this.progress?.id !== id) this.progress = null;
+    // a join's progress stays while it runs, and when DayZ didn't get in (to see why), but not once DayZ is in
+    const done = this.progress?.phase === "started" && this.launch?.state !== "running" && this.launch?.state !== "failed";
+    if (!this.busy && !this.starting && (this.progress?.id !== id || done)) {
+      this.progress = null;
+      if (done) this.launch = null;
+    }
   }
 
   close() {

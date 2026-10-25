@@ -17,6 +17,7 @@
   let servers = $state.raw<Map<string, ServerItem>>(new Map());
   let error = $state("");
   let timer = 0;
+  let stopped = false;
 
   async function refresh() {
     try {
@@ -25,8 +26,10 @@
       error = "";
       const ids = [...new Set(f.online.flatMap((x) => (x.server ? [x.server] : [])))];
       if (ids.length) {
-        const r = await api.servers(`ids=${ids.join(",")}&limit=200`);
-        servers = new Map(r.servers.map((s) => [s.id, s]));
+        try {
+          const r = await api.servers(`ids=${ids.join(",")}&limit=200`);
+          servers = new Map(r.servers.map((s) => [s.id, s]));
+        } catch { /* the servers' names are extra: the friends show without them */ }
       }
     } catch (e) {
       error = message(e);
@@ -34,10 +37,11 @@
   }
 
   onMount(() => {
-    const tick = () => refresh().finally(() => (timer = window.setTimeout(tick, EVERY)));
+    // a refresh still running when the tab closes doesn't start another
+    const tick = () => refresh().finally(() => { if (!stopped) timer = window.setTimeout(tick, EVERY); });
     tick();
   });
-  onDestroy(() => clearTimeout(timer));
+  onDestroy(() => { stopped = true; clearTimeout(timer); });
 
   const dayz = $derived(data?.online.filter((f) => f.inDayz) ?? []);
   const games = $derived(data?.online.filter((f) => !f.inDayz && f.app) ?? []);

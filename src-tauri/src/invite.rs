@@ -12,9 +12,10 @@ use tauri_plugin_deep_link::DeepLinkExt;
 #[derive(Default)]
 pub struct Pending(pub Mutex<Option<String>>);
 
-/// The server id in an invite link (`zatlas://join/1.2.3.4:2302`), when it is one.
+/// The server id in an invite link (`zatlas://join/1.2.3.4:2302`), when it is one. Anything after `?` or `#` is ignored.
 pub fn server_id(url: &str) -> Option<String> {
-    let id = url.strip_prefix("zatlas://join/")?.trim_end_matches('/');
+    let rest = url.strip_prefix("zatlas://join/")?;
+    let id = rest.split(['?', '#']).next()?.trim_end_matches('/');
     crate::api::valid_id(id).then(|| id.to_string())
 }
 
@@ -60,6 +61,12 @@ mod tests {
             server_id("zatlas://join/1.2.3.4:2302/").as_deref(),
             Some("1.2.3.4:2302")
         );
+        assert_eq!(
+            server_id("zatlas://join/1.2.3.4:2302?from=discord").as_deref(),
+            Some("1.2.3.4:2302")
+        );
+        assert_eq!(server_id("zatlas://join/1.2.3.4:+2302"), None);
+        assert_eq!(server_id("zatlas://join/1.2.3.4:02302"), None);
         assert_eq!(server_id("zatlas://join/not-a-server"), None);
         assert_eq!(server_id("https://zatlas.app/join?s=1.2.3.4:2302"), None);
     }

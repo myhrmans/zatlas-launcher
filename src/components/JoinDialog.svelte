@@ -5,6 +5,7 @@
    * be waited for: once the mods are in, the join waits for a free slot and then starts DayZ. The dialog can be hidden
    * meanwhile; the top bar shows the join until it's done.
    */
+  import { onMount } from "svelte";
   import { api, message, type ModState, type ServerDetail } from "../lib/api";
   import { bytes, sameVersion } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
@@ -54,12 +55,15 @@
   });
 
   function onkey(e: KeyboardEvent) { if (e.key === "Escape") joining.close(); }
+  // the dialog takes the focus; the window behind it is inert while it's open (App.svelte)
+  let box = $state<HTMLElement>();
+  onMount(() => box?.focus());
 </script>
 
 <svelte:window onkeydown={onkey} />
 
 <div class="scrim" role="presentation" onclick={(e) => { if (e.target === e.currentTarget) joining.close(); }}>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="jd-title">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="jd-title" tabindex="-1" bind:this={box}>
     <h2 id="jd-title"><span class="plate">Join</span><span>{p?.name ?? detail?.server.name ?? target.name}</span></h2>
 
     {#if !p}
@@ -146,7 +150,7 @@
 <style>
   .scrim { position: fixed; inset: 0; background: var(--dim); display: grid; place-items: center; z-index: 10; }
   .dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow: auto; background: var(--panel); box-shadow: var(--shadow); border-radius: var(--r-surface);
-    padding: var(--s-6); display: flex; flex-direction: column; gap: var(--s-4); position: relative; }
+    padding: var(--s-6); display: flex; flex-direction: column; gap: var(--s-4); position: relative; outline: none; }
   .dialog::before { content: ""; position: absolute; inset: 0 0 auto; height: var(--hazard-h); background: repeating-linear-gradient(-45deg, var(--amber) 0 8px, var(--dark) 8px 16px); }
   h2 { margin: var(--s-2) 0 0; font: 800 var(--t-section)/1.3 var(--f-text); display: flex; gap: var(--s-4); align-items: baseline; overflow-wrap: anywhere; }
   h2 .plate { font-size: var(--t-label); flex: none; }

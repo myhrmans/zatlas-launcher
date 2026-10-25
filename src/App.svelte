@@ -38,7 +38,7 @@
 
 <svelte:window {oncontextmenu} />
 
-<div class="shell">
+<div class="shell" inert={!!joining.target}>
   <header class="top">
     <Wordmark />
     <nav aria-label="Views">
@@ -63,7 +63,7 @@
     {#if tab === "servers"}<ServersView />{:else if tab === "mods"}<ModsView />{:else if tab === "friends"}<FriendsView />{:else}<SettingsView />{/if}
   </main>
 </div>
-{#if joining.target}<JoinDialog />{/if}
+{#if joining.target}{#key joining.target.id}<JoinDialog />{/key}{/if}
 <ContextMenu />
 
 <style>

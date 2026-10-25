@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use serde::Serialize;
@@ -10,15 +11,18 @@ use steamworks::{FriendFlags, FriendState};
 use crate::api;
 use crate::steam::DAYZ;
 
-/// Game names by app id, asked from the Steam store once per game.
-static GAMES: Mutex<BTreeMap<u32, Option<String>>> = Mutex::new(BTreeMap::new());
+/// Game names by app id, asked from the Steam store once per game, and when it didn't answer, again a while later.
+static GAMES: Mutex<BTreeMap<u32, (Option<String>, Instant)>> = Mutex::new(BTreeMap::new());
+const ASK_AGAIN: Duration = Duration::from_secs(300);
 
 fn game_name(app: u32) -> Option<String> {
-    if let Some(name) = GAMES.lock().unwrap().get(&app) {
+    if let Some((name, at)) = GAMES.lock().unwrap().get(&app)
+        && (name.is_some() || at.elapsed() < ASK_AGAIN)
+    {
         return name.clone();
     }
     let name = api::app_name(app);
-    GAMES.lock().unwrap().insert(app, name.clone());
+    GAMES.lock().unwrap().insert(app, (name.clone(), Instant::now()));
     name
 }
 

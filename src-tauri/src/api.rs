@@ -25,7 +25,10 @@ pub fn valid_id(id: &str) -> bool {
     let Some((ip, port)) = id.split_once(':') else {
         return false;
     };
-    ip.parse::<std::net::Ipv4Addr>().is_ok() && port.parse::<u16>().is_ok()
+    ip.parse::<std::net::Ipv4Addr>().is_ok()
+        && port.bytes().all(|b| b.is_ascii_digit())
+        && !port.starts_with('0')
+        && port.parse::<u16>().is_ok()
 }
 
 pub fn get(path: &str) -> Result<Value, String> {
@@ -99,11 +102,11 @@ pub fn workshop(ids: &[u64]) -> Result<HashMap<u64, WorkshopInfo>, String> {
             .send_form(form)
             .map_err(|e| format!("Steam's Workshop didn't answer: {e}"))?;
         let body: Value = res.body_mut().read_json().map_err(|e| e.to_string())?;
-        for item in body["response"]["publishedfiledetails"]
-            .as_array()
-            .into_iter()
-            .flatten()
-        {
+        let items = body["response"]["publishedfiledetails"].as_array();
+        if items.is_none_or(|items| items.len() != chunk.len()) {
+            return Err("Steam's Workshop sent an incomplete answer.".into());
+        }
+        for item in items.into_iter().flatten() {
             // numbers come as JSON numbers or as strings
             let num = |k: &str| {
                 item[k]
@@ -113,8 +116,13 @@ pub fn workshop(ids: &[u64]) -> Result<HashMap<u64, WorkshopInfo>, String> {
             let Some(id) = num("publishedfileid") else {
                 continue;
             };
-            // result 1 means found; anything else (usually 9) means removed or private
-            if item["result"].as_u64() != Some(1) || num("consumer_app_id") != Some(u64::from(DAYZ)) {
+            // result 1 means found, 9 removed and 15 private; anything else is a passing error
+            match item["result"].as_u64() {
+                Some(1) => {}
+                Some(9 | 15) => continue,
+                _ => return Err(format!("Steam's Workshop couldn't look up mod {id} just now.")),
+            }
+            if num("consumer_app_id") != Some(u64::from(DAYZ)) {
                 continue;
             }
             out.insert(
