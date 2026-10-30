@@ -6,7 +6,7 @@
 
 A small Windows app for DayZ players, to go with [zatlas.app](https://zatlas.app):
 
-- **Servers:** the same list as zatlas.app/servers, with search, filters and favourites. A server's panel shows its player count over time, its mods, and which of them you already have.
+- **Servers:** the same list as zatlas.app/servers, with search, filters and favourites. Pressing a player count asks the server for its count right now. A server's panel shows its player count over time, its mods, and which of them you already have.
 - **Join:** subscribes to the server's missing mods through Steam, waits for the downloads, and starts DayZ straight into the server with the mods loaded. While DayZ starts, it shows each step, and why when it fails.
 - **Mods:** the Workshop mods on your PC, their size, updates and when you last used them. Update or unsubscribe from here.
 - **Friends:** your Steam friends who are online, which game they're in, and for DayZ, which server when Steam knows it, with Join.

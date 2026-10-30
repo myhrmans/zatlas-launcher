@@ -109,6 +109,12 @@ async fn ping(servers: Vec<ping::Target>) -> Result<Vec<ping::Ping>, String> {
     blocking(move || ping::ping(&servers)).await
 }
 
+/// A server's players and slots right now, asked of the server itself; none when it doesn't answer.
+#[tauri::command]
+async fn slots(ip: String, query_port: u16) -> Result<Option<a2s::Slots>, String> {
+    blocking(move || Ok(a2s::slots(&ip, query_port))).await
+}
+
 #[tauri::command]
 fn join(app: AppHandle, core: Shared<'_>, req: join::Request) -> Result<(), String> {
     let settings = core.settings.lock().unwrap().clone();
@@ -261,6 +267,7 @@ fn main() {
             server,
             mod_states,
             ping,
+            slots,
             join,
             cancel_join,
             open_logs,

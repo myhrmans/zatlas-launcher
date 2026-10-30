@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * One server: the facts, Join, the favourite star, a link to it on zatlas.app, what its owner wrote about it (with
+   * One server: its player count (pressed, it asks the server again), the facts, Join, the favourite star, a link to it on zatlas.app, what its owner wrote about it (with
    * links that open in the browser), its player count over the last day or
    * week (from zatlas.app's servers API, as on the site's server panel), and its mods with what this PC has:
    * downloaded, out of date, or still to download (and how big). The row's data shows at once while the rest loads.
@@ -9,6 +9,7 @@
   import { api, message, type ModState, type ServerDetail, type ServerItem } from "../lib/api";
   import { favourites } from "../lib/favourites.svelte";
   import { chart, countAt } from "../lib/chart";
+  import { counts as liveCounts } from "../lib/counts.svelte";
   import { bytes, DOUBT, FAKE_NOTE, mapName, pingTone, sameVersion } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
   import { linkify } from "../lib/links";
@@ -63,6 +64,10 @@
 
   const s = $derived(detail?.server ?? summary);
   const ping = $derived(pings.get(id));
+  // the count the server gave when asked from here, over zatlas.app's
+  const asked = $derived(liveCounts.get(id));
+  const players = $derived(asked?.players ?? s?.players ?? 0);
+  const max = $derived(asked?.max ?? s?.maxPlayers ?? 0);
   $effect(() => { if (s) pings.measure([s]); });
   const fav = $derived(favourites.has(id));
   const local = $derived(live.now?.dayzVersion ?? null);
@@ -88,7 +93,14 @@
   {#if error}
     <p class="danger">{error}</p>
   {:else if s}
-    <p class="count"><b>{s.players}</b> / {s.maxPlayers} players{#if s.queue > 0}<span class="warn">{` · queue ${s.queue}`}</span>{/if}</p>
+    <p class="count">
+      {#if s.queryPort}
+        {#key liveCounts.refreshed(id)}
+          <button type="button" class="recount" class:none={asked === null} class:busy={liveCounts.busy(id)} class:flash={liveCounts.refreshed(id) > 0}
+            title={asked === null ? "No answer, so this is zatlas.app's count. Press to ask again" : "Press to ask the server for its count now"}
+            onclick={() => liveCounts.refresh(s)}><b>{players}</b> / {max} players<span class="again" aria-hidden="true">↻</span></button>
+        {/key}
+      {:else}<b>{players}</b> / {max} players{/if}{#if s.queue > 0}<span class="warn">{` · queue ${s.queue}`}</span>{/if}</p>
     {#if s.farm}<p class="fake">{FAKE_NOTE}</p>{/if}
     {#if s.doubt.length}
       <div class="doubts">

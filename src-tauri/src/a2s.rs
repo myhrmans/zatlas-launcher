@@ -1,5 +1,5 @@
 //! Asking a server how full it is, with a Steam server query (A2S_INFO) to its query port. A join that waits for a
-//! free slot asks this every few seconds.
+//! free slot asks this every few seconds, and the server list when a player count is pressed.
 
 use std::net::{Ipv4Addr, SocketAddr, UdpSocket};
 use std::time::Duration;

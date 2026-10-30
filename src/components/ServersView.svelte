@@ -1,12 +1,14 @@
 <script lang="ts">
   /**
    * The server list from zatlas.app (the same as zatlas.app/servers): search and filters, favourites, a Join button on
-   * the row under the pointer, a right-click menu (Join, invite link, …), and the chosen server's panel on the right. While DayZ runs, a line on top names the
+   * the row under the pointer, a right-click menu (Join, invite link, …), player counts that ask the server again when
+   * pressed, and the chosen server's panel on the right. While DayZ runs, a line on top names the
    * server last joined from here. The ping filter works on this PC's pings, so it hides servers among those loaded; the
    * other filters go to the servers API.
    */
   import { onMount, untrack } from "svelte";
   import { api, message, type Facets, type ServerItem } from "../lib/api";
+  import { counts } from "../lib/counts.svelte";
   import { favourites } from "../lib/favourites.svelte";
   import { DOUBT_TITLE, FAKE_NOTE, mapName, pingTone, sameVersion, since } from "../lib/format";
   import { joining } from "../lib/joining.svelte";
@@ -80,6 +82,7 @@
       const r = await api.servers(query(offset));
       if (thisLoad !== loads) return;
       items = offset ? [...items, ...r.servers] : r.servers;
+      if (!offset) counts.forget();
       total = r.total;
       unfiltered = 0;
       status = "ok";
@@ -206,6 +209,9 @@
           <tbody>
             {#each shown as s (s.id)}
               {@const ms = pings.get(s.id)}
+              {@const asked = counts.get(s.id)}
+              {@const players = asked?.players ?? s.players}
+              {@const max = asked?.max ?? s.maxPlayers}
               <tr class:sel={s.id === selected} class:menu={menu.isFor(s.id)} onclick={() => (selected = s.id)}
                 oncontextmenu={(e) => menu.show(e, serverMenu(s), { title: s.name, key: s.id })}>
                 <td class="c-name">
@@ -233,8 +239,14 @@
                     {/key}
                   {/if}
                 </td>
-                <td class="c-num">{#if s.doubt.length}<span class="doubt" role="img" aria-label="Count doubtful" title={DOUBT_TITLE}>?</span>{/if}<b>{s.players}</b><span class="note">/{s.maxPlayers}</span>
-                  <span class="bar"><i style:width="{Math.min(100, (s.players / Math.max(1, s.maxPlayers)) * 100)}%"></i></span></td>
+                <td class="c-num">{#if s.doubt.length}<span class="doubt" role="img" aria-label="Count doubtful" title={DOUBT_TITLE}>?</span>{/if}{#if s.queryPort}
+                    {#key counts.refreshed(s.id)}
+                      <button type="button" class="recount" class:none={asked === null} class:busy={counts.busy(s.id)} class:flash={counts.refreshed(s.id) > 0}
+                        title={asked === null ? "No answer, so this is zatlas.app's count. Press to ask again" : "Press to ask the server for its count now"}
+                        onclick={(e) => { e.stopPropagation(); counts.refresh(s); }}><b>{players}</b><span class="note">/{max}</span><span class="again" aria-hidden="true">↻</span></button>
+                    {/key}
+                  {:else}<b>{players}</b><span class="note">/{max}</span>{/if}
+                  <span class="bar"><i style:width="{Math.min(100, (players / Math.max(1, max)) * 100)}%"></i></span></td>
                 <td class="c-join"><Button primary small onclick={(e: MouseEvent) => { e.stopPropagation(); joining.open(s.id, s.name); }}>Join</Button></td>
               </tr>
             {/each}

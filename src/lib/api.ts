@@ -71,8 +71,11 @@ export interface JoinProgress {
   message: string | null;
   mods: { id: number; name: string; state: "ready" | "subscribing" | "waiting" | "downloading" | "skipped"; done: number; total: number }[];
   /** while waiting: the server's players and slots, or null when it didn't answer */
-  slots: { players: number; max: number } | null;
+  slots: Slots | null;
 }
+
+/** What a server says about itself when asked (src-tauri/src/a2s.rs) */
+export interface Slots { players: number; max: number }
 
 export interface Friend {
   id: string;
@@ -137,6 +140,8 @@ export const api = {
   server: (id: string, hours = 24) => invoke<ServerDetail>("server", { id, hours }),
   modStates: (ids: number[]) => invoke<ModState[]>("mod_states", { ids }),
   ping: (servers: { id: string; ip: string; queryPort: number }[]) => invoke<Ping[]>("ping", { servers }),
+  /** the server's players and slots right now, asked of the server; null when it didn't answer */
+  slots: (ip: string, queryPort: number) => invoke<Slots | null>("slots", { ip, queryPort }),
   join: (req: { id: string; password: string | null; closeRunning: boolean; waitForRoom: boolean }) => invoke<void>("join", { req }),
   cancelJoin: () => invoke<void>("cancel_join"),
   friends: () => invoke<Friends>("friends"),
